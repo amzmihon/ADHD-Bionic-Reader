@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "ADHD-Reader__Bionic-Reader",
+  "version": "1.0.0",
+  "description": "Boldens the first part of words to guide your eyes through text faster using the Bionic Reading method.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": ["storage", "activeTab", "tts", "contextMenus"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    },
+    "default_popup": "popup.html",
+    "default_title": "ADHD-Reader__Bionic-Reader"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

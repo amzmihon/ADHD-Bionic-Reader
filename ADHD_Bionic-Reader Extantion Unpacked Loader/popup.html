@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADHD-Reader__Bionic-Reader Settings</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      width: 280px;
+      padding: 16px;
+      background-color: #fcfcfc;
+      color: #333;
+      margin: 0;
+    }
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+      margin-bottom: 16px;
+      text-align: center;
+      color: #1a1a1a;
+      border-bottom: 1px solid #eaeaea;
+      padding-bottom: 12px;
+    }
+    b { font-weight: 700; color: #000; }
+    
+    .setting-group { margin-bottom: 16px; }
+    
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .label-row label { font-size: 14px; font-weight: 600; }
+    
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s;
+      border-radius: 22px;
+    }
+    .slider:before {
+      position: absolute; content: "";
+      height: 16px; width: 16px; left: 3px; bottom: 3px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(18px); }
+    input:focus-visible + .slider { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2196F3; }
+
+    /* Range Slider */
+    input[type=range] { width: 100%; margin: 0; }
+    .slider-value { font-size: 12px; color: #666; }
+
+    /* Button */
+    .btn {
+      display: block; width: 100%; padding: 8px;
+      font-size: 13px; font-weight: 600; text-align: center;
+      color: #d32f2f; background-color: #fff;
+      border: 1px solid #d32f2f; border-radius: 6px;
+      cursor: pointer; transition: 0.2s;
+    }
+    .btn:hover { background-color: #ffebee; }
+    .btn.blacklisted { background-color: #d32f2f; color: #fff; }
+    .btn.blacklisted:hover { background-color: #b71c1c; border-color: #b71c1c; }
+
+    .footer { margin-top: 20px; font-size: 12px; text-align: center; color: #aaa; }
+    
+    .divider { height: 1px; background: #eaeaea; margin: 16px 0; }
+
+    /* Theme Select Dropdown */
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .radio-group, .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .radio-group label, .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      transition: background-color 0.15s;
+    }
+    .radio-group label:hover, .checkbox-group label:hover {
+      background-color: #f0f0f0;
+    }
+    .radio-group input[type=radio], .checkbox-group input[type=checkbox] {
+      accent-color: #2196F3;
+      width: 15px;
+      height: 15px;
+      margin: 0;
+      cursor: pointer;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #1a1a1a; color: #fcfcfc; }
+      h1 { color: #fff; border-bottom-color: #333; }
+      b { color: #fff; }
+      .slider-value { color: #aaa; }
+      .btn { background-color: #333; color: #ff5252; border-color: #ff5252; }
+      .btn:hover { background-color: #444; }
+      .btn.blacklisted { background-color: #ff5252; color: #fff; }
+      .btn.blacklisted:hover { background-color: #d32f2f; border-color: #d32f2f; }
+      .divider { background: #333; }
+      summary { color: #aaa; }
+      .switch .slider { background-color: #555; }
+      .section-title { color: #888; }
+      .radio-group label:hover, .checkbox-group label:hover {
+        background-color: #2a2a2a;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1 style="font-size: 16px;">ADHD-Reader__<b>Bion</b>ic-<b>Read</b>er</h1>
+  
+  <div class="setting-group">
+    <div class="label-row">
+      <label for="enable-toggle">Enable Bionic Text</label>
+      <label class="switch">
+        <input type="checkbox" id="enable-toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="label-row">
+      <label for="fixation-slider">Bionic Fixation</label>
+      <span class="slider-value" id="fixation-value">40%</span>
+    </div>
+    <input type="range" id="fixation-slider" min="10" max="100" value="40" step="10">
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="setting-group">
+    <div class="label-row">
+      <label for="tts-toggle">Floating TTS Button</label>
+      <label class="switch">
+        <input type="checkbox" id="tts-toggle" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <div class="label-row">
+      <label for="speed-slider">Voice Speed</label>
+      <span class="slider-value" id="speed-value">1.0x</span>
+    </div>
+    <input type="range" id="speed-slider" min="0.5" max="2.0" value="1.0" step="0.1">
+  </div>
+
+  <div class="setting-group">
+    <div class="section-title">Display Mode</div>
+    <div class="radio-group">
+      <label><input type="radio" name="primary-mode" id="mode-light" value="light" checked> ☀️ Light</label>
+      <label><input type="radio" name="primary-mode" id="mode-gray" value="gray"> 🩶 Gray (#363636)</label>
+      <label><input type="radio" name="primary-mode" id="mode-black" value="black"> ⬛ Black</label>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="setting-group">
+    <div class="section-title">Reading Aids</div>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="focus-toggle"> 🎯 Focus (Hide Media)</label>
+      <label><input type="checkbox" id="bw-toggle"> ⬜ B&W (Grayscale)</label>
+      <label><input type="checkbox" id="hc-toggle"> 🔳 High Contrast</label>
+      <label><input type="checkbox" id="nightlight-toggle"> 🌙 Night Light</label>
+      <label><input type="checkbox" id="adhd-toggle"> ⚡ ADHD Mode</label>
+    </div>
+  </div>
+
+  <div class="setting-group" style="margin-top: 24px;">
+    <button id="blacklist-btn" class="btn">Disable on this site</button>
+  </div>
+
+  <details style="margin-bottom: 16px; font-size: 13px;">
+    <summary style="cursor: pointer; font-weight: 600; color: #666;">Advanced Settings</summary>
+    <div style="margin-top: 12px;">
+      <div class="label-row" style="margin-bottom: 12px;">
+        <label for="cyrillic-toggle" style="font-size: 12px; font-weight: normal;">Cyrillic (Russian, etc.)</label>
+        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+          <input type="checkbox" id="cyrillic-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="label-row" style="margin-bottom: 12px;">
+        <label for="greek-toggle" style="font-size: 12px; font-weight: normal;">Greek</label>
+        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+          <input type="checkbox" id="greek-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="label-row">
+        <label for="experimental-toggle" style="font-size: 12px; font-weight: normal;">Experimental (All other scripts)</label>
+        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+          <input type="checkbox" id="experimental-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+  </details>
+
+  <div class="footer" style="margin-bottom: 4px; margin-top: 16px;">Developed by @amzmihon</div>
+  <div class="footer" id="current-domain" style="margin-top: 0;">Loading...</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
