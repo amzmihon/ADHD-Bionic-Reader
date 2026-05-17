@@ -2,6 +2,7 @@
 const DEFAULT_SETTINGS = {
   enabled: true,
   fixationRatio: 0.4,
+  bionicBoldness: 1.2,
   blacklist: [],
   showFloatingTTS: true,
   voiceSpeed: 1.0,
@@ -11,7 +12,8 @@ const DEFAULT_SETTINGS = {
   bwEnabled: false,
   hcEnabled: false,
   nightLightEnabled: false,
-  adhdEnabled: false
+  adhdEnabled: false,
+  readerModeEnabled: false
 };
 
 let currentSettings = { ...DEFAULT_SETTINGS };
@@ -260,7 +262,7 @@ function processNode(node) {
     }
 
     let rangeIndex = 0;
-    const nodeRanges = new Set();
+    const rangesByParent = new Map();
 
     nodeMap.forEach(item => {
       const { node: textNode, start, end } = item;
@@ -283,7 +285,14 @@ function processNode(node) {
             range.setStart(textNode, localStart);
             range.setEnd(textNode, localEnd);
             bionicHighlight.add(range);
-            nodeRanges.add(range);
+            
+            const parentEl = textNode.parentElement;
+            if (parentEl) {
+              if (!rangesByParent.has(parentEl)) {
+                rangesByParent.set(parentEl, new Set());
+              }
+              rangesByParent.get(parentEl).add(range);
+            }
           } catch (e) {
             // Silently skip invalid ranges (node was removed by SPA)
           }
@@ -293,11 +302,16 @@ function processNode(node) {
       }
     });
 
-    // Track ranges for this root node for future cleanup
-    if (nodeRanges.size > 0) {
-      rangesByRoot.set(node, nodeRanges);
-      processedRoots.add(node);
-    }
+    // Track ranges for each parent element for future cleanup
+    rangesByParent.forEach((ranges, parentEl) => {
+      const existingRanges = rangesByRoot.get(parentEl);
+      if (existingRanges) {
+        ranges.forEach(r => existingRanges.add(r));
+      } else {
+        rangesByRoot.set(parentEl, ranges);
+      }
+      processedRoots.add(parentEl);
+    });
 
   } finally {
     isProcessing = false;
@@ -375,19 +389,25 @@ function checkUrlChange() {
   }
 }
 
-function injectStyles() {
-  if (document.getElementById('bionic-styles')) return;
-  const style = document.createElement('style');
-  style.id = 'bionic-styles';
+function injectStyles(settings) {
+  let style = document.getElementById('bionic-styles');
+  if (!style) {
+    style = document.createElement('style');
+    style.id = 'bionic-styles';
+    if (document.head) document.head.appendChild(style);
+  }
+  
+  const strokeWidth = settings ? settings.bionicBoldness : 1.2;
+  
   style.textContent = `
     ::highlight(bionic-highlight) {
       /* Chromium ignores font-weight in ::highlight() to prevent layout shifts. 
          We simulate bolding using a sub-pixel stroke and shadow. */
-      -webkit-text-stroke: 1.2px currentColor !important;
+      -webkit-text-stroke: ${strokeWidth}px currentColor !important;
       text-shadow: 0 0 1px currentColor !important;
     }
   `;
-  if (document.head) document.head.appendChild(style);
+  if (document.body) document.body.classList.toggle('bionic-force-repaint');
 }
 
 let ioSoft = null;
@@ -401,7 +421,7 @@ function startObserver() {
     return;
   }
 
-  injectStyles();
+  injectStyles(currentSettings);
 
   if (!ioSoft) {
     ioSoft = new IntersectionObserver((entries) => {
@@ -526,101 +546,60 @@ function applyVisualSettings(settings) {
   // CRITICAL CLEANUP: Always tear down ADHD overlays first
   removeADHDOverlays();
 
-  let styleEl = document.getElementById('adhd-visual-engine');
-  if (!styleEl) {
-    styleEl = document.createElement('style');
-    styleEl.id = 'adhd-visual-engine';
-    if (document.head) document.head.appendChild(styleEl);
-  }
-
-  // ZERO MEMORY LEAKS: Clear before rebuilding
-  let css = '';
-  const htmlFilters = [];
   const mode = settings.primaryMode || 'light';
+  
+  if (typeof DarkReader !== 'undefined') {
+    let isDarkReaderNeeded = false;
+    let theme = {
+      brightness: 100,
+      contrast: settings.hcEnabled ? 150 : 100,
+      sepia: settings.nightLightEnabled ? 40 : 0,
+      grayscale: settings.bwEnabled ? 100 : 0,
+      mode: (mode === 'gray' || mode === 'black') ? 1 : 0
+    };
 
-  // ── Primary Modes (Mutually Exclusive) ──────────────────────
-  // Pattern: DarkReader CSS Filter Mode — invert + hue-rotate
-  // No background-color overrides (they get inverted back = flashbang)
-  if (mode === 'gray') {
-    htmlFilters.push('invert(0.85)', 'hue-rotate(180deg)');
-    css += `
-      img, video, picture, canvas, svg,
-      [style*="background-image"] {
-        filter: invert(0.85) hue-rotate(180deg) !important;
-      }
-    `;
-  } else if (mode === 'black') {
-    htmlFilters.push('invert(1)', 'hue-rotate(180deg)');
-    css += `
-      img, video, picture, canvas, svg,
-      [style*="background-image"] {
-        filter: invert(1) hue-rotate(180deg) !important;
-      }
-    `;
-  }
-  // 'light' mode = no filters, no background override
+    if (mode === 'gray') {
+      theme.darkSchemeBackgroundColor = '#363636';
+      theme.darkSchemeTextColor = '#e8e6e3';
+    } else if (mode === 'black') {
+      theme.darkSchemeBackgroundColor = '#000000';
+      theme.darkSchemeTextColor = '#e8e6e3';
+    }
 
-  // ── Additive Features (Combinable) ─────────────────────────
+    if (mode === 'gray' || mode === 'black' || settings.bwEnabled || settings.nightLightEnabled || settings.hcEnabled) {
+      isDarkReaderNeeded = true;
+    }
 
-  // B&W: Sienna pattern — universal grayscale
-  if (settings.bwEnabled) {
-    htmlFilters.push('grayscale(100%)');
-  }
-
-  // Night Light: Calibrated warm tint for blue light reduction
-  if (settings.nightLightEnabled) {
-    htmlFilters.push('sepia(40%)', 'hue-rotate(-20deg)');
+    if (isDarkReaderNeeded) {
+      DarkReader.enable(theme);
+    } else {
+      DarkReader.disable();
+    }
   }
 
   // Focus: AccessibleWeb pattern (modified — opacity instead of display:none)
+  let focusStyleEl = document.getElementById('adhd-focus-engine');
   if (settings.focusEnabled) {
-    css += `
+    if (!focusStyleEl) {
+      focusStyleEl = document.createElement('style');
+      focusStyleEl.id = 'adhd-focus-engine';
+      if (document.head) document.head.appendChild(focusStyleEl);
+    }
+    focusStyleEl.textContent = `
       img, video, iframe, canvas, svg, picture {
         opacity: 0 !important;
         visibility: hidden !important;
         pointer-events: none !important;
       }
     `;
-  }
-
-  // HC: Refined High Contrast — target semantic text containers only
-  // Avoids the "nuclear option" of `body *` which destroys nested card/button hierarchy
-  if (settings.hcEnabled) {
-    const HC_TARGETS = 'p, span, h1, h2, h3, h4, h5, h6, li, td, th, dt, dd, label, figcaption, blockquote, article, section, main, header, footer, nav, aside, details, summary, a, strong, em, b, i, u, small, mark, del, ins, sub, sup, pre, code';
-    
-    // Because dark modes use a global `invert()` filter, we MUST inject "light mode" CSS 
-    // here so the filter can mathematically flip it back to black background and white text.
-    css += `
-      ${HC_TARGETS} {
-        color: #000 !important;
-        background-color: #fff !important;
-        border-color: #000 !important;
-        text-shadow: none !important;
-        box-shadow: none !important;
-      }
-      a {
-        color: #00e !important;
-        text-decoration: underline !important;
-      }
-    `;
+  } else if (focusStyleEl) {
+    focusStyleEl.remove();
   }
 
   // ADHD: Peripheral breathing animation via Shadow DOM
   if (settings.adhdEnabled) {
     setupADHDOverlays();
   }
-
-  // ── Compose final HTML filter declaration ───────────────────
-  if (htmlFilters.length > 0) {
-    css += `
-      html {
-        filter: ${htmlFilters.join(' ')} !important;
-        transform: translateZ(0);
-      }
-    `;
-  }
-
-  styleEl.textContent = css;
 }
 
 function setupADHDOverlays() {
@@ -670,6 +649,101 @@ function removeADHDOverlays() {
 }
 
 // ============================================================
+// READER MODE ENGINE (Mozilla Readability)
+// ============================================================
+
+let readerModeOverlay = null;
+
+function enableReaderMode() {
+  if (readerModeOverlay || typeof Readability === 'undefined') return;
+
+  const documentClone = document.cloneNode(true);
+  let article;
+  try {
+    article = new Readability(documentClone).parse();
+  } catch (e) {
+    console.warn("Readability parsing failed", e);
+    return;
+  }
+  
+  if (!article) return;
+
+  // Safely hide original body children without destroying DOM state (preserves SPA)
+  Array.from(document.body.children).forEach(child => {
+    if (child.id !== 'bionic-reader-overlay' && !child.tagName.includes('HOST')) {
+      child.dataset.bionicOriginalDisplay = child.style.display || '';
+      child.style.display = 'none';
+    }
+  });
+
+  readerModeOverlay = document.createElement('div');
+  readerModeOverlay.id = 'bionic-reader-overlay';
+  
+  // Clean, distraction-free styling that inherits Dark Reader automatically
+  readerModeOverlay.innerHTML = `
+    <style>
+      #bionic-reader-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; min-height: 100vh;
+        background-color: transparent;
+        z-index: 2147483645; /* Below TTS and ADHD borders */
+        padding: 40px 20px;
+        box-sizing: border-box;
+      }
+      #bionic-reader-overlay .reader-content-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        font-size: 18px;
+        line-height: 1.6;
+      }
+      #bionic-reader-overlay h1 {
+        font-size: 2.2em;
+        margin-bottom: 0.5em;
+        line-height: 1.2;
+      }
+      #bionic-reader-overlay img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 16px 0;
+      }
+      #bionic-reader-overlay hr {
+        border: 0;
+        border-top: 1px solid #ccc;
+        margin: 32px 0;
+      }
+    </style>
+    <div class="reader-content-wrapper">
+      <h1>${article.title}</h1>
+      <hr>
+      ${article.content}
+    </div>
+  `;
+  
+  document.body.appendChild(readerModeOverlay);
+  
+  // The Bionic Text MutationObserver will automatically detect this new DOM node
+  // and process it. TTS will work because it's standard text selection.
+}
+
+function disableReaderMode() {
+  if (!readerModeOverlay) return;
+
+  // Restore original body children
+  Array.from(document.body.children).forEach(child => {
+    if (child.dataset.bionicOriginalDisplay !== undefined) {
+      child.style.display = child.dataset.bionicOriginalDisplay;
+      delete child.dataset.bionicOriginalDisplay;
+    }
+  });
+
+  readerModeOverlay.remove();
+  readerModeOverlay = null;
+}
+
+
+// ============================================================
 // SETTINGS LIFECYCLE
 // ============================================================
 
@@ -677,33 +751,52 @@ function applySettingsAndRender(settings) {
   const previousSettings = { ...currentSettings };
   currentSettings = settings;
 
+  // Update dynamic styles
+  injectStyles(currentSettings);
+
   // Visual Environment Engine (isolated)
   applyVisualSettings(currentSettings);
 
   const isBlacklisted = currentSettings.blacklist.includes(window.location.hostname);
   const shouldBeActive = currentSettings.enabled && !isBlacklisted;
+  const wasBlacklisted = previousSettings.blacklist && previousSettings.blacklist.includes(window.location.hostname);
+  const wasActive = previousSettings.enabled && !wasBlacklisted;
 
   if (shouldBeActive) {
+    // Reader Mode logic
+    if (currentSettings.readerModeEnabled) {
+      enableReaderMode();
+    } else {
+      disableReaderMode();
+    }
+
     const scriptsChanged = JSON.stringify(previousSettings.allowedScripts || ['Latin']) !== JSON.stringify(currentSettings.allowedScripts || ['Latin']);
+    const fixationChanged = previousSettings.fixationRatio !== currentSettings.fixationRatio;
+    const toggledOn = !wasActive;
+    const readerModeChanged = previousSettings.readerModeEnabled !== currentSettings.readerModeEnabled;
+
+    const needsHardUpdate = toggledOn || fixationChanged || scriptsChanged || readerModeChanged;
     
-    if (previousSettings.fixationRatio !== currentSettings.fixationRatio || scriptsChanged) {
+    if (needsHardUpdate) {
       undoBionic();
       pendingNodes.clear();
+      if (document.body) {
+        processNode(document.body);
+      }
     }
     
-    if (!currentSettings.showFloatingTTS) {
-      hideTTSUI();
-    }
-    
-    if (document.body) {
-      processNode(document.body);
+    if (currentSettings.showFloatingTTS) {
       setupTTSUI();
+    } else {
+      hideTTSUI();
     }
     
     startObserver();
   } else {
+    disableReaderMode();
     stopObserver();
     undoBionic();
+    pendingNodes.clear();
     hideTTSUI();
   }
 }

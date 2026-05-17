@@ -1,6 +1,7 @@
 const DEFAULT_SETTINGS = {
   enabled: true,
   fixationRatio: 0.4,
+  bionicBoldness: 1.2,
   blacklist: [],
   showFloatingTTS: true,
   voiceSpeed: 1.0,
@@ -10,7 +11,8 @@ const DEFAULT_SETTINGS = {
   bwEnabled: false,
   hcEnabled: false,
   nightLightEnabled: false,
-  adhdEnabled: false
+  adhdEnabled: false,
+  readerModeEnabled: false
 };
 
 let currentSettings = { ...DEFAULT_SETTINGS };
@@ -18,6 +20,8 @@ let currentSettings = { ...DEFAULT_SETTINGS };
 const enableToggle = document.getElementById('enable-toggle');
 const fixationSlider = document.getElementById('fixation-slider');
 const fixationValue = document.getElementById('fixation-value');
+const boldnessSlider = document.getElementById('boldness-slider');
+const boldnessValue = document.getElementById('boldness-value');
 const ttsToggle = document.getElementById('tts-toggle');
 const speedSlider = document.getElementById('speed-slider');
 const speedValue = document.getElementById('speed-value');
@@ -39,6 +43,9 @@ const bwToggle = document.getElementById('bw-toggle');
 const hcToggle = document.getElementById('hc-toggle');
 const nightLightToggle = document.getElementById('nightlight-toggle');
 const adhdToggle = document.getElementById('adhd-toggle');
+
+// Reader Mode Toggle
+const readerToggle = document.getElementById('reader-toggle');
 
 let currentHostname = '';
 let saveTimeout = null;
@@ -70,6 +77,8 @@ async function init() {
     enableToggle.checked = settings.enabled;
     fixationSlider.value = settings.fixationRatio * 100;
     fixationValue.textContent = `${fixationSlider.value}%`;
+    boldnessSlider.value = settings.bionicBoldness;
+    boldnessValue.textContent = `${settings.bionicBoldness}x`;
     ttsToggle.checked = settings.showFloatingTTS;
     speedSlider.value = settings.voiceSpeed;
     speedValue.textContent = `${settings.voiceSpeed}x`;
@@ -91,6 +100,7 @@ async function init() {
     hcToggle.checked = settings.hcEnabled || false;
     nightLightToggle.checked = settings.nightLightEnabled || false;
     adhdToggle.checked = settings.adhdEnabled || false;
+    readerToggle.checked = settings.readerModeEnabled || false;
 
     updateBlacklistBtnUI(settings.blacklist.includes(currentHostname));
   });
@@ -103,6 +113,13 @@ async function init() {
   fixationSlider.addEventListener('input', (e) => {
     fixationValue.textContent = `${e.target.value}%`;
     currentSettings.fixationRatio = parseInt(e.target.value) / 100;
+    queueSaveSettings();
+  });
+
+  boldnessSlider.addEventListener('input', (e) => {
+    const val = parseFloat(e.target.value).toFixed(1);
+    boldnessValue.textContent = `${val}x`;
+    currentSettings.bionicBoldness = parseFloat(val);
     queueSaveSettings();
   });
 
@@ -166,6 +183,26 @@ async function init() {
   adhdToggle.addEventListener('change', (e) => {
     currentSettings.adhdEnabled = e.target.checked;
     queueSaveSettings();
+  });
+
+  readerToggle.addEventListener('change', (e) => {
+    currentSettings.readerModeEnabled = e.target.checked;
+    queueSaveSettings();
+  });
+
+  // Tab Switching Logic
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-target');
+      document.getElementById(targetId).classList.add('active');
+    });
   });
 
   blacklistBtn.addEventListener('click', () => {

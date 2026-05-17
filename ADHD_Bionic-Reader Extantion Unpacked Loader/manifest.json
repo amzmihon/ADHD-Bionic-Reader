@@ -24,7 +24,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["darkreader.js", "Readability.js", "content.js"],
       "run_at": "document_start"
     }
   ]

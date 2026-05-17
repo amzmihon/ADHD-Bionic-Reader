@@ -113,6 +113,30 @@
       cursor: pointer;
     }
 
+    /* Tabs */
+    .tab-container {
+      display: flex;
+      border-bottom: 1px solid #eaeaea;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      flex: 1;
+      text-align: center;
+      padding: 8px 0;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #666;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      transition: 0.2s;
+    }
+    .tab-btn:hover { color: #333; }
+    .tab-btn.active { color: #2196F3; border-bottom: 2px solid #2196F3; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
     @media (prefers-color-scheme: dark) {
       body { background-color: #1a1a1a; color: #fcfcfc; }
       h1 { color: #fff; border-bottom-color: #333; }
@@ -129,102 +153,136 @@
       .radio-group label:hover, .checkbox-group label:hover {
         background-color: #2a2a2a;
       }
+      .tab-container { border-bottom-color: #333; }
+      .tab-btn { color: #aaa; }
+      .tab-btn:hover { color: #fff; }
+      .tab-btn.active { color: #2196F3; border-bottom-color: #2196F3; }
     }
   </style>
 </head>
 <body>
   <h1 style="font-size: 16px;">ADHD-Reader__<b>Bion</b>ic-<b>Read</b>er</h1>
   
-  <div class="setting-group">
-    <div class="label-row">
-      <label for="enable-toggle">Enable Bionic Text</label>
-      <label class="switch">
-        <input type="checkbox" id="enable-toggle" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
+  <div class="tab-container">
+    <button class="tab-btn active" data-target="tab-bionic">Bionic Text</button>
+    <button class="tab-btn" data-target="tab-audio">Audio (TTS)</button>
+    <button class="tab-btn" data-target="tab-env">Environment</button>
+    <button class="tab-btn" data-target="tab-reader">Reader</button>
   </div>
 
-  <div class="setting-group">
-    <div class="label-row">
-      <label for="fixation-slider">Bionic Fixation</label>
-      <span class="slider-value" id="fixation-value">40%</span>
-    </div>
-    <input type="range" id="fixation-slider" min="10" max="100" value="40" step="10">
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="setting-group">
-    <div class="label-row">
-      <label for="tts-toggle">Floating TTS Button</label>
-      <label class="switch">
-        <input type="checkbox" id="tts-toggle" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
-  </div>
-
-  <div class="setting-group">
-    <div class="label-row">
-      <label for="speed-slider">Voice Speed</label>
-      <span class="slider-value" id="speed-value">1.0x</span>
-    </div>
-    <input type="range" id="speed-slider" min="0.5" max="2.0" value="1.0" step="0.1">
-  </div>
-
-  <div class="setting-group">
-    <div class="section-title">Display Mode</div>
-    <div class="radio-group">
-      <label><input type="radio" name="primary-mode" id="mode-light" value="light" checked> ☀️ Light</label>
-      <label><input type="radio" name="primary-mode" id="mode-gray" value="gray"> 🩶 Gray (#363636)</label>
-      <label><input type="radio" name="primary-mode" id="mode-black" value="black"> ⬛ Black</label>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="setting-group">
-    <div class="section-title">Reading Aids</div>
-    <div class="checkbox-group">
-      <label><input type="checkbox" id="focus-toggle"> 🎯 Focus (Hide Media)</label>
-      <label><input type="checkbox" id="bw-toggle"> ⬜ B&W (Grayscale)</label>
-      <label><input type="checkbox" id="hc-toggle"> 🔳 High Contrast</label>
-      <label><input type="checkbox" id="nightlight-toggle"> 🌙 Night Light</label>
-      <label><input type="checkbox" id="adhd-toggle"> ⚡ ADHD Mode</label>
-    </div>
-  </div>
-
-  <div class="setting-group" style="margin-top: 24px;">
-    <button id="blacklist-btn" class="btn">Disable on this site</button>
-  </div>
-
-  <details style="margin-bottom: 16px; font-size: 13px;">
-    <summary style="cursor: pointer; font-weight: 600; color: #666;">Advanced Settings</summary>
-    <div style="margin-top: 12px;">
-      <div class="label-row" style="margin-bottom: 12px;">
-        <label for="cyrillic-toggle" style="font-size: 12px; font-weight: normal;">Cyrillic (Russian, etc.)</label>
-        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
-          <input type="checkbox" id="cyrillic-toggle">
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="label-row" style="margin-bottom: 12px;">
-        <label for="greek-toggle" style="font-size: 12px; font-weight: normal;">Greek</label>
-        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
-          <input type="checkbox" id="greek-toggle">
-          <span class="slider"></span>
-        </label>
-      </div>
+  <div id="tab-bionic" class="tab-content active">
+    <div class="setting-group">
       <div class="label-row">
-        <label for="experimental-toggle" style="font-size: 12px; font-weight: normal;">Experimental (All other scripts)</label>
-        <label class="switch" style="transform: scale(0.8); transform-origin: right;">
-          <input type="checkbox" id="experimental-toggle">
+        <label for="enable-toggle">Enable Bionic Text</label>
+        <label class="switch">
+          <input type="checkbox" id="enable-toggle" checked>
           <span class="slider"></span>
         </label>
       </div>
     </div>
-  </details>
+
+    <div class="setting-group">
+      <div class="label-row">
+        <label for="fixation-slider">Bionic Fixation</label>
+        <span class="slider-value" id="fixation-value">40%</span>
+      </div>
+      <input type="range" id="fixation-slider" min="10" max="100" value="40" step="10">
+    </div>
+
+    <div class="setting-group">
+      <div class="label-row">
+        <label for="boldness-slider">Bionic Boldness</label>
+        <span class="slider-value" id="boldness-value">1.2x</span>
+      </div>
+      <input type="range" id="boldness-slider" min="0.1" max="2.5" value="1.2" step="0.1">
+    </div>
+
+    <details style="margin-bottom: 16px; font-size: 13px;">
+      <summary style="cursor: pointer; font-weight: 600; color: #666;">Advanced Settings</summary>
+      <div style="margin-top: 12px;">
+        <div class="label-row" style="margin-bottom: 12px;">
+          <label for="cyrillic-toggle" style="font-size: 12px; font-weight: normal;">Cyrillic (Russian, etc.)</label>
+          <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+            <input type="checkbox" id="cyrillic-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="label-row" style="margin-bottom: 12px;">
+          <label for="greek-toggle" style="font-size: 12px; font-weight: normal;">Greek</label>
+          <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+            <input type="checkbox" id="greek-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="label-row">
+          <label for="experimental-toggle" style="font-size: 12px; font-weight: normal;">Experimental (All other scripts)</label>
+          <label class="switch" style="transform: scale(0.8); transform-origin: right;">
+            <input type="checkbox" id="experimental-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <div id="tab-audio" class="tab-content">
+    <div class="setting-group">
+      <div class="label-row">
+        <label for="tts-toggle">Floating TTS Button</label>
+        <label class="switch">
+          <input type="checkbox" id="tts-toggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <div class="label-row">
+        <label for="speed-slider">Voice Speed</label>
+        <span class="slider-value" id="speed-value">1.0x</span>
+      </div>
+      <input type="range" id="speed-slider" min="0.5" max="2.0" value="1.0" step="0.1">
+    </div>
+  </div>
+
+  <div id="tab-env" class="tab-content">
+    <div class="setting-group">
+      <div class="section-title">Display Mode</div>
+      <div class="radio-group">
+        <label><input type="radio" name="primary-mode" id="mode-light" value="light" checked> ☀️ Light</label>
+        <label><input type="radio" name="primary-mode" id="mode-gray" value="gray"> 🩶 Gray (#363636)</label>
+        <label><input type="radio" name="primary-mode" id="mode-black" value="black"> ⬛ Black</label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="setting-group">
+      <div class="section-title">Reading Aids</div>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="focus-toggle"> 🎯 Focus (Hide Media)</label>
+        <label><input type="checkbox" id="bw-toggle"> ⬜ B&W (Grayscale)</label>
+        <label><input type="checkbox" id="hc-toggle"> 🔳 High Contrast</label>
+        <label><input type="checkbox" id="nightlight-toggle"> 🌙 Night Light</label>
+        <label><input type="checkbox" id="adhd-toggle"> ⚡ ADHD Mode</label>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-reader" class="tab-content">
+    <div class="setting-group">
+      <div class="label-row">
+        <label for="reader-toggle">Enable Reader View</label>
+        <label class="switch">
+          <input type="checkbox" id="reader-toggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p style="font-size: 12px; color: #666; margin-top: 8px;">
+        Strips away clutter and extracts the main article content for a distraction-free reading experience.
+      </p>
+    </div>
+  </div>
 
   <div class="footer" style="margin-bottom: 4px; margin-top: 16px;">Developed by @amzmihon</div>
   <div class="footer" id="current-domain" style="margin-top: 0;">Loading...</div>
